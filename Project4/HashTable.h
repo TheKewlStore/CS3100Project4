@@ -1,24 +1,43 @@
 #pragma once
 
 #include "Record.h"
+#include <iostream>
+#include <stddef.h>
+#include <stdint.h>
 
-#define MAXHASH 1001
+#define MAXHASH 1009
+#define POLY 0x82f63b78
 
 
 template <class T> class HashTable
 {
 private: 
-	int hashSize;
 	int numberRecords;
 
 	Record<T>** hashTable;
+
+	friend ostream& operator<<(ostream& os, const HashTable& table) {
+		for (int hashKey = 0; hashKey < MAXHASH; hashKey++) {
+			Record<T>* currentRecord = table.hashTable[hashKey];
+
+			if (!currentRecord->isEmpty()) {
+				cout << *currentRecord << endl;
+			}
+		}
+
+		return os;
+	}
+
 public:
 
 	HashTable()
 	{
-		hashSize = 0;
 		numberRecords = 0;
 		hashTable = new Record<T>*[MAXHASH];
+
+		for (int i = 0; i < MAXHASH; i++) {
+			hashTable[i] = new Record<T>();
+		}
 	}
 
 	~HashTable()
@@ -32,46 +51,51 @@ public:
 	}
 
 	bool insert(int key, T value, int& collisions) {
+		if (numberRecords >= MAXHASH) {
+			return false;
+		}
+
 		unsigned int hashKey = hash(key);
 
-		if (hasValue(hashKey)) {
+		while (hasValue(hashKey)) {
 			collisions++;
 			unsigned int newKey = probe(key, collisions);
-			return insert(key, value, collisions);
+
+			//cout << "Collision for hashKey: " << hashKey << "number of collisions: " << collisions << "next key: " << newKey << endl;
+
+			if (!hasValue(newKey)) {
+				hashKey = newKey;
+			}
 		}
-		else {
-			hashTable[hashKey] = new Record<T>(hashKey, value);
-			return true;
-		}
+
+		hashTable[hashKey] = new Record<T>(hashKey, value);
+		numberRecords++;
+		return true;
 	}
 
 	bool remove(int key) {
 		unsigned int hashKey = hash(key);
 
-		if (!hashTable[hashKey]->isNormal() || hashTable[hashKey]->isTombstone()) {
-			return false;
+		if (hasValue(hashKey)) {
+			hashTable[hashKey]->kill();
+			return true;
 		}
 		else {
 			// TODO: Determine if I need to delete the Record before nulling the table position.
-			hashTable[hashKey].kill();
+			return false;
 		}
 	}
 
 	bool find(int key, T& value) {
 		unsigned int hashKey = hash(key);
-		T* value = hashTable[hashKey];
-		return value == nullptr;
+		Record<T>* record = hashTable[hashKey];
+		value = record->getValue();
+
+		return hasValue(hashKey);
 	}
 
 	float alpha() {
-		return numberRecords / hashSize;
-	}
-
-	friend ostream& operator<<(ostream& os, const HashTable& table) {
-		cout << "Hash Index | Hash Key | Hash Value"
-		for (int hash = 0; hash < MAXHASH; hash++) {
-			cout << ""
-		}
+		return numberRecords / MAXHASH;
 	}
 
 	/* This hash function was found via stackoverflow here: http://stackoverflow.com/a/12996028
@@ -96,6 +120,18 @@ public:
 	*/
 	unsigned int probe(unsigned int key, unsigned int collisions) {
 		// Not sure if this is a good idea or not, needs verification.
-		return hash(key + collisions);
+		return (key + hash(collisions)) % MAXHASH;
+	}
+
+	void clear() {
+  		delete[] hashTable;
+
+		hashTable = new Record<T>*[MAXHASH];
+
+		for (int i = 0; i < MAXHASH; i++) {
+			hashTable[i] = new Record<T>();
+		}
+
+		numberRecords = 0;
 	}
 };
