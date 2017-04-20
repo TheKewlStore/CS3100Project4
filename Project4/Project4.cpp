@@ -12,8 +12,7 @@
 using namespace std;
 
 
-int main()
-{
+void collisionsTest() {
 	HashTable<string>* myHashTable = new HashTable<string>();
 	int collisions = 0;
 	int totalCollisions = 0;
@@ -77,6 +76,36 @@ int main()
 			totalCollisions = 0;
 		}
 	}
+}
+
+
+void cpuTest() {
+	HashTable<string>* myHashTable = new HashTable<string>();
+	int collisions = 0;
+	int totalCollisions = 0;
+
+	for (int numRecords = 0; numRecords < 100000; numRecords++) {
+		int currentIndex = fmod(pow(numRecords, 2), MAXHASH);
+
+		bool success = myHashTable->insert(currentIndex, "test" + to_string(currentIndex), collisions);
+		totalCollisions += collisions;
+		collisions = 0;
+
+		//cout << "Inserted: " << "test" + to_string(currentIndex) << " - " << success << endl;
+
+		if (numRecords % 100 == 0) {
+			cout << "Total number of collisions for " << numRecords << " inserts: " << totalCollisions << endl;
+			totalCollisions = 0;
+		}
+	}
+}
+
+
+int main()
+{
+	//collisionsTest();
+	cpuTest();
+
 
 	system("pause");
     return 0;
