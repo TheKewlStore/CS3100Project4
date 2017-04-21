@@ -148,8 +148,8 @@ void cpuTest1000() {
 
 int main()
 {
-	//collisionsTest();
-	cpuTest100();
+	collisionsTest();
+	/*cpuTest100();
 	cpuTest200();
 	cpuTest300();
 	cpuTest400();
@@ -158,9 +158,9 @@ int main()
 	cpuTest700();
 	cpuTest800();
 	cpuTest900();
-	cpuTest1000();
+	cpuTest1000();*/
 
-	//system("pause");
+	system("pause");
     return 0;
 }
 

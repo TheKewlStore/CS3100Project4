@@ -7,12 +7,16 @@
 #include <vector>
 #include <algorithm>
 
+// Increasing the maximum hash size to 1009 was vital in getting good performance out of my hash function/probe sequence
+// 1009 is a prime number, and this greatly reduces the number of collisions encountered after about 40% capacity.
 #define MAXHASH 1009
 
 
 using namespace std;
 
 
+/* Represent a Hash Table of fixed size, storing values of type T.
+*/
 template <class T> class HashTable
 {
 private: 
@@ -22,6 +26,10 @@ private:
 
 	Record<T>** hashTable;
 
+	/* Print a HashTable to an ostream.
+
+		Only displays records that are not empty, including tombstones.
+	*/
 	friend ostream& operator<<(ostream& os, const HashTable& table) {
 		for (int hashKey = 0; hashKey < MAXHASH; hashKey++) {
 			Record<T>* currentRecord = table.hashTable[hashKey];
@@ -36,6 +44,8 @@ private:
 
 public:
 
+	/* HashTable constructor. Initialize all arrays, and push indexes into our probe sequence and shuffle for pseudo-random probing.
+	*/
 	HashTable()
 	{
 		numberRecords = 0;
@@ -57,17 +67,25 @@ public:
 		random_shuffle(probeSequence->begin(), probeSequence->end());
 	}
 
+	/* HashTable destructor, clear up the hashTable and probeSequence array.
+	*/
 	~HashTable()
 	{
 		delete[] hashTable;
 		delete[] probeSequence;
 	}
 
+	/* Determine if a given hashKey is a valid record with data.
+	*/
 	bool hasValue(int hashKey) {
 		Record<T>* record = hashTable[hashKey];
 		return record != nullptr && record->isNormal() && !record->isTombstone();
 	}
 
+	/* Insert a new record with given key and value into the table.
+
+		The collisions parameter will be incremented based on the number of collisions for this insert (if any).
+	*/
 	bool insert(int key, T value, int& collisions) {
 		if (numberRecords >= MAXHASH) {
 			return false;
@@ -91,6 +109,11 @@ public:
 		return true;
 	}
 
+	/* Remove a given key from the table.
+
+		Marks records as tombstones. 
+		If the record is not found in the table, this function returns false.
+	*/
 	bool remove(int key) {
 		unsigned int hashKey = hash(key);
 
@@ -104,6 +127,8 @@ public:
 		}
 	}
 
+	/* Find a given key in the table, and update value to be a copy of the value stored there.
+	*/
 	bool find(int key, T& value) {
 		unsigned int hashKey = hash(key);
 		Record<T>* record = hashTable[hashKey];
@@ -112,10 +137,19 @@ public:
 		return hasValue(hashKey);
 	}
 
+	/* Return the current loading factor of our table.
+	*/
 	float alpha() {
 		return numberRecords / MAXHASH;
 	}
 
+	/* This hash function was found via stackoverflow here: http://stackoverflow.com/a/665545
+		
+		This function seemed to get the most uniform distribution of keys for this hash size out of a few options that were tried, 
+		which resulted in the fewest number of collisions.
+
+		It uses multiplication with a relatively large number, so it may be considerably slower than other alternatives.
+	*/
 	unsigned int hash(unsigned int key) {
 		return key * 2654435761 % (MAXHASH);
 	}
@@ -130,13 +164,6 @@ public:
 	unsigned int probeHash(unsigned int key) {
 		key = ((key >> 16) ^ key) * 0x45d9f3b;
 		key = ((key >> 16) ^ key) * 0x45d9f3b;
-		key = (key >> 16) ^ key;
-		return key % MAXHASH;
-	}
-
-	unsigned int oldHash(unsigned int key) {
-		key = ((key << 16) ^ key) * 0x49fd3fb;
-		key = ((key >> 16) ^ key) * 0x49fd3fb;
 		key = (key >> 16) ^ key;
 		return key % MAXHASH;
 	}
