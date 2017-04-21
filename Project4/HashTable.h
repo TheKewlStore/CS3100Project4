@@ -4,15 +4,21 @@
 #include <iostream>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
+#include <algorithm>
 
 #define MAXHASH 1009
-#define POLY 0x82f63b78
+
+
+using namespace std;
 
 
 template <class T> class HashTable
 {
 private: 
 	int numberRecords;
+
+	vector<int>* probeSequence;
 
 	Record<T>** hashTable;
 
@@ -33,16 +39,28 @@ public:
 	HashTable()
 	{
 		numberRecords = 0;
+
 		hashTable = new Record<T>*[MAXHASH];
+		probeSequence = new vector<int>[MAXHASH]();
 
 		for (int i = 0; i < MAXHASH; i++) {
 			hashTable[i] = new Record<T>();
+			if (i == 0) {
+				probeSequence->push_back(1);
+			}
+			else {
+				probeSequence->push_back(i);
+			}
+			
 		}
+
+		random_shuffle(probeSequence->begin(), probeSequence->end());
 	}
 
 	~HashTable()
 	{
 		delete[] hashTable;
+		delete[] probeSequence;
 	}
 
 	bool hasValue(int hashKey) {
@@ -98,6 +116,10 @@ public:
 		return numberRecords / MAXHASH;
 	}
 
+	unsigned int hash(unsigned int key) {
+		return key * 2654435761 % (MAXHASH);
+	}
+
 	/* This hash function was found via stackoverflow here: http://stackoverflow.com/a/12996028
 
 		It bit shifts everything right in order to include all of the bits in the output answer.
@@ -105,11 +127,18 @@ public:
 
 		Worst-case time complexity: T(1).
 	*/
-	unsigned int hash(unsigned int x) {
-		x = ((x >> 16) ^ x) * 0x45d9f3b;
-		x = ((x >> 16) ^ x) * 0x45d9f3b;
-		x = (x >> 16) ^ x;
-		return x % MAXHASH;
+	unsigned int probeHash(unsigned int key) {
+		key = ((key >> 16) ^ key) * 0x45d9f3b;
+		key = ((key >> 16) ^ key) * 0x45d9f3b;
+		key = (key >> 16) ^ key;
+		return key % MAXHASH;
+	}
+
+	unsigned int oldHash(unsigned int key) {
+		key = ((key << 16) ^ key) * 0x49fd3fb;
+		key = ((key >> 16) ^ key) * 0x49fd3fb;
+		key = (key >> 16) ^ key;
+		return key % MAXHASH;
 	}
 
 	/* This probe function simply just reuses our existing hash function on the key + the number of collisions.
@@ -120,7 +149,9 @@ public:
 	*/
 	unsigned int probe(unsigned int key, unsigned int collisions) {
 		// Not sure if this is a good idea or not, needs verification.
-		return (key + hash(collisions)) % MAXHASH;
+		unsigned int offset = probeSequence->at(hash(key));
+		return (hash(key) + offset * collisions) % MAXHASH;
+		//return (hash(key) + collisions * probeHash(key)) % MAXHASH;
 	}
 
 	void clear() {

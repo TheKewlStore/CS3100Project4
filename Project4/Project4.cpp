@@ -79,35 +79,88 @@ void collisionsTest() {
 }
 
 
-void cpuTest() {
+void cpuTest(int totalRecords) {
 	HashTable<string>* myHashTable = new HashTable<string>();
 	int collisions = 0;
 	int totalCollisions = 0;
 
-	for (int numRecords = 0; numRecords < 100000; numRecords++) {
+	for (int numRecords = 0; numRecords < totalRecords; numRecords++) {
 		int currentIndex = fmod(pow(numRecords, 2), MAXHASH);
 
 		bool success = myHashTable->insert(currentIndex, "test" + to_string(currentIndex), collisions);
 		totalCollisions += collisions;
 		collisions = 0;
-
-		//cout << "Inserted: " << "test" + to_string(currentIndex) << " - " << success << endl;
-
-		if (numRecords % 100 == 0) {
-			cout << "Total number of collisions for " << numRecords << " inserts: " << totalCollisions << endl;
-			totalCollisions = 0;
-		}
 	}
+
+	cout << "Total number of collisions for " << totalRecords << " inserts: " << totalCollisions << endl;
+}
+
+
+void cpuTest100() {
+	cpuTest(100);
+}
+
+
+void cpuTest200() {
+	cpuTest(200);
+}
+
+
+void cpuTest300() {
+	cpuTest(300);
+}
+
+
+void cpuTest400() {
+	cpuTest(400);
+}
+
+
+void cpuTest500() {
+	cpuTest(500);
+}
+
+
+void cpuTest600() {
+	cpuTest(600);
+}
+
+
+void cpuTest700() {
+	cpuTest(700);
+}
+
+
+void cpuTest800() {
+	cpuTest(800);
+}
+
+
+void cpuTest900() {
+	cpuTest(900);
+}
+
+
+void cpuTest1000() {
+	cpuTest(1000);
 }
 
 
 int main()
 {
 	//collisionsTest();
-	cpuTest();
+	cpuTest100();
+	cpuTest200();
+	cpuTest300();
+	cpuTest400();
+	cpuTest500();
+	cpuTest600();
+	cpuTest700();
+	cpuTest800();
+	cpuTest900();
+	cpuTest1000();
 
-
-	system("pause");
+	//system("pause");
     return 0;
 }
 
